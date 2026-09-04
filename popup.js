@@ -33,9 +33,16 @@ function getCurrentDateBR() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Carregar nome do operador salvo
+  // Carregar operador salvo
   chrome.storage.sync.get({ operatorName: '' }, (items) => {
     document.getElementById('operatorName').value = items.operatorName || '';
+  });
+
+  // Carregar preferência de modo
+  chrome.storage.sync.get({ fullRowMode: false }, (items) => {
+    const checkbox = document.getElementById('fullRowMode');
+    checkbox.checked = items.fullRowMode;
+    toggleModeVisibility();
   });
 
   // Carregar dados coletados
@@ -51,56 +58,108 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Botão copiar linha
-  document.getElementById('copyBtn').addEventListener('click', async () => {
+  // Alternar modo
+  document.getElementById('fullRowMode').addEventListener('change', (e) => {
+    const isFull = e.target.checked;
+    chrome.storage.sync.set({ fullRowMode: isFull });
+    toggleModeVisibility();
+  });
+
+  function toggleModeVisibility() {
+    const isFull = document.getElementById('fullRowMode').checked;
+    document.getElementById('selectiveButtons').style.display = isFull ? 'none' : 'block';
+    document.getElementById('fullRowButton').style.display = isFull ? 'block' : 'none';
+  }
+
+  // Botão copiar dados principais (H-L)
+  document.getElementById('copyMainBtn').addEventListener('click', async () => {
     const response = await chrome.runtime.sendMessage({ action: 'getState' });
-    const collectedData = response.collectedData || {};
+    const data = response.collectedData || {};
 
-    // Obtém nome do operador (do input, já salvo ou não)
-    const operatorName = document.getElementById('operatorName').value.trim();
-
-    // Adiciona datas atuais para B e P
-    const currentDate = getCurrentDateBR();
-    collectedData['B'] = currentDate;
-    collectedData['P'] = currentDate;
-
-    // Monta a linha TSV para colunas A..R (18 colunas, índices 0 a 17)
-    const maxCol = 17; // R = 17
-    const rowArray = new Array(maxCol + 1).fill('');
-
-    // Coloca os valores coletados nas posições correspondentes
-    for (const [col, val] of Object.entries(collectedData)) {
-      const idx = col.charCodeAt(0) - 65; // A=0, B=1, ..., R=17
-      if (idx >= 0 && idx <= maxCol) {
-        rowArray[idx] = val || '';
-      }
-    }
-
-    // Valores fixos
-    rowArray[0] = 'E-MAIL';   // Coluna A
-    rowArray[6] = 'CRÉDITO';  // Coluna G
-
-    // Coluna R (índice 17) recebe o nome do operador
-    rowArray[17] = operatorName;
-
-    const line = rowArray.join('\t');
+    // Monta linha com H, I, J, K, L (separados por tab)
+    const mainValues = [
+      data['H'] || '',
+      data['I'] || '',
+      data['J'] || '',
+      data['K'] || '',
+      data['L'] || ''
+    ];
+    const line = mainValues.join('\t');
 
     try {
       await navigator.clipboard.writeText(line);
-      document.getElementById('status').textContent = 'Linha copiada! Vá até a planilha, clique na célula A da linha desejada e cole (Ctrl+V).';
+      document.getElementById('status').textContent = 'Dados principais copiados! Vá até a planilha, clique na célula H da linha e cole (Ctrl+V).';
     } catch (err) {
-      // Fallback
       const textarea = document.createElement('textarea');
       textarea.value = line;
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      document.getElementById('status').textContent = 'Linha copiada (fallback).';
+      document.getElementById('status').textContent = 'Dados principais copiados (fallback).';
     }
   });
 
-  // Botão limpar dados
+  // Botão copiar e-mail (Q)
+  document.getElementById('copyEmailBtn').addEventListener('click', async () => {
+    const response = await chrome.runtime.sendMessage({ action: 'getState' });
+    const data = response.collectedData || {};
+    const email = data['Q'] || '';
+
+    try {
+      await navigator.clipboard.writeText(email);
+      document.getElementById('status').textContent = 'E-mail copiado! Vá até a planilha, clique na célula Q da linha e cole (Ctrl+V).';
+    } catch (err) {
+      const textarea = document.createElement('textarea');
+      textarea.value = email;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      document.getElementById('status').textContent = 'E-mail copiado (fallback).';
+    }
+  });
+
+  // Botão copiar linha completa (A-R)
+  document.getElementById('copyFullRowBtn').addEventListener('click', async () => {
+    const response = await chrome.runtime.sendMessage({ action: 'getState' });
+    const collectedData = response.collectedData || {};
+    const operatorName = document.getElementById('operatorName').value.trim();
+    const currentDate = getCurrentDateBR();
+
+    // Preenche valores fixos e automáticos
+    collectedData['B'] = currentDate;
+    collectedData['P'] = currentDate;
+    collectedData['A'] = 'E-MAIL';
+    collectedData['G'] = 'CRÉDITO';
+    collectedData['R'] = operatorName;
+
+    // Monta array de A até R (índices 0 a 17)
+    const maxCol = 17;
+    const rowArray = new Array(maxCol + 1).fill('');
+    for (const [col, val] of Object.entries(collectedData)) {
+      const idx = col.charCodeAt(0) - 65;
+      if (idx >= 0 && idx <= maxCol) {
+        rowArray[idx] = val || '';
+      }
+    }
+    const line = rowArray.join('\t');
+
+    try {
+      await navigator.clipboard.writeText(line);
+      document.getElementById('status').textContent = 'Linha completa copiada! Clique na célula A da linha e cole (Ctrl+V).';
+    } catch (err) {
+      const textarea = document.createElement('textarea');
+      textarea.value = line;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      document.getElementById('status').textContent = 'Linha completa copiada (fallback).';
+    }
+  });
+
+  // Limpar dados
   document.getElementById('clearBtn').addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'clearData' }, (response) => {
       if (response.success) {

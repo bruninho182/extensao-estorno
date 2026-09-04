@@ -10,23 +10,10 @@
       font-family: Arial, sans-serif;
       background-color: #f9f9f9;
     }
-    h2 {
-      margin-top: 0;
-      font-size: 1.2em;
-      color: #333;
-    }
-    h3 {
-      margin-bottom: 5px;
-      font-size: 1em;
-      color: #555;
-    }
-    label {
-      display: block;
-      margin-bottom: 3px;
-      font-size: 0.85em;
-      color: #666;
-    }
-    input {
+    h2 { margin-top: 0; font-size: 1.2em; color: #333; }
+    h3 { margin-bottom: 5px; font-size: 1em; color: #555; }
+    label { display: block; margin-bottom: 3px; font-size: 0.85em; color: #666; }
+    input[type="text"], input[type="number"] {
       width: 100%;
       padding: 6px;
       margin-bottom: 10px;
@@ -45,21 +32,10 @@
       cursor: pointer;
       font-size: 0.9em;
     }
-    button#clearBtn {
-      background: #f44336;
-    }
-    button#saveOperatorBtn {
-      background: #2196F3;
-    }
-    button:hover {
-      opacity: 0.9;
-    }
-    #status {
-      margin-top: 10px;
-      color: #d32f2f;
-      font-size: 0.85em;
-      min-height: 20px;
-    }
+    button#clearBtn { background: #f44336; }
+    button#saveOperatorBtn { background: #2196F3; }
+    button:hover { opacity: 0.9; }
+    #status { margin-top: 10px; color: #d32f2f; font-size: 0.85em; min-height: 20px; }
     #collectedInfo {
       margin-top: 8px;
       font-size: 0.85em;
@@ -70,15 +46,13 @@
       max-height: 200px;
       overflow-y: auto;
     }
-    #collectedInfo ul {
-      margin: 0;
-      padding-left: 18px;
-    }
-    .note {
-      font-size: 0.75em;
-      color: #888;
-      margin-top: 5px;
-    }
+    #collectedInfo ul { margin: 0; padding-left: 18px; }
+    .note { font-size: 0.75em; color: #888; margin-top: 5px; }
+    .checkbox-container { display: flex; align-items: center; margin-bottom: 10px; }
+    .checkbox-container input { width: auto; margin-right: 5px; }
+    .separator { border-top: 1px solid #ccc; margin: 10px 0; }
+    .button-group { display: flex; gap: 5px; }
+    .button-group button { flex: 1; }
   </style>
 </head>
 <body>
@@ -89,18 +63,42 @@
   <input type="text" id="operatorName" placeholder="Digite seu nome">
   <button id="saveOperatorBtn">Salvar operador</button>
 
-  <hr>
+  <div class="separator"></div>
+
+  <h3>Modo de preenchimento</h3>
+  <div class="checkbox-container">
+    <input type="checkbox" id="fullRowMode">
+    <label for="fullRowMode">Preencher linha completa (A-R, pode sobrescrever)</label>
+  </div>
+
+  <div id="selectiveButtons">
+    <p class="note">Modo seletivo: copie os dados abaixo e cole nas células indicadas.</p>
+    <button id="copyMainBtn">Copiar dados principais (H, I, J, K, L)</button>
+    <button id="copyEmailBtn">Copiar e-mail (Q)</button>
+  </div>
+
+  <div id="fullRowButton" style="display:none;">
+    <button id="copyFullRowBtn">Copiar linha completa (A-R)</button>
+  </div>
+
+  <div class="separator"></div>
 
   <h3>Dados Coletados</h3>
   <div id="collectedInfo">Nenhum dado coletado.</div>
 
-  <button id="copyBtn">Copiar linha para área de transferência</button>
   <button id="clearBtn">Limpar dados coletados</button>
   <div id="status"></div>
 
   <p class="note">
-    As datas de <strong>Solicitação (B)</strong> e <strong>Estorno (P)</strong> serão preenchidas automaticamente com a data de hoje.
+    As datas de <strong>Solicitação (B)</strong> e <strong>Estorno (P)</strong> são adicionadas automaticamente (somente no modo linha completa).
   </p>
+
+  <div class="status" id="statusMsg">
+    <i class="fas fa-code"></i> Desenvolvido por 
+    <a href="https://github.com/bruninho182" target="_blank">
+      <i class="fab fa-github"></i> Bruno Ferreira
+    </a>
+  </div>
 
   <script src="popup.js"></script>
 </body>
