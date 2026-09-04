@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Automação de Cancelamento",
+  "version": "1.0",
+  "description": "Coleta dados de cancelamento. Dev - Bruno Ferreira",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://dash.pagar.me/*",
+    "https://www.ingressocomdesconto.com.br/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Cancelamento"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://dash.pagar.me/*"],
+      "js": ["content/pagarme.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://www.ingressocomdesconto.com.br/*"],
+      "js": ["content/icd.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}
